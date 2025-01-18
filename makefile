@@ -3,14 +3,14 @@
 # Variables
 DOCKER_COMPOSE_FILE = docker-compose.yaml
 DOCKER_IMAGE_NAME = facial-recognition
-GO_MAIN_FILE = ./cmd/server/main.go
+GO_MAIN_FILE = ./src/cmd/server/main.go
 
 # Test
 .PHONY: test
 test:
 	echo "Running tests..."
 
-# Default target
+# Run the server with Docker
 .PHONY: all
 all: build run
 
@@ -28,3 +28,8 @@ run:
 .PHONY: stop
 stop:
 	docker-compose -f $(DOCKER_COMPOSE_FILE) down
+
+# Run code locally
+.PHONY: dev
+dev:
+	air
