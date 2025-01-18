@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  # App Service
+  facial_recognition:
+    container_name: facial_recognition
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ENV: "pro"
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - postgresql
+    networks:
+      - service_auth-network
+    healthcheck:
+      test:
+        ["CMD", "sh", "-c", "curl -sSf http://${HOST}:${PORT}/ping > /dev/null"]
+      interval: 60s
+      timeout: 2s
+      retries: 3
+
+networks:
+  facial_recognition:
+    driver: bridge

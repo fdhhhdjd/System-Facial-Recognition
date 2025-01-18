@@ -21,14 +21,12 @@
 
 # Project: **Code Go service Face Recognition**
 
-## Technology Stack: 
+## Technology Stack:
+
 - **Backend**: Go + Gin
-- **Database**: PostgreSQL
 - **Lib**: Have a lot of lib to service project.
-- **Cache**: Redis
 
 ---
-
 
 ## License: MIT License
 
