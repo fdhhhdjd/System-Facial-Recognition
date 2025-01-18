@@ -7,5 +7,12 @@
   "[go]": {
     "editor.defaultFormatter": "golang.go"
   },
-  "cSpell.words": ["fdhhhdjd", "fsnotify", "Fullname", "gonic", "RABBITMQ"]
+  "cSpell.words": [
+    "fdhhhdjd",
+    "fsnotify",
+    "Fullname",
+    "gonic",
+    "healthcheck",
+    "RABBITMQ"
+  ]
 }
