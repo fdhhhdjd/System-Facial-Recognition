@@ -37,3 +37,17 @@ func BadRequestError(c *gin.Context, code int, messages ...string) {
 	response := CreateErrorResponse(message, pkg.StatusBadRequest, code)
 	Send(c, response.Status, response)
 }
+
+// NotFoundError represents a 404 Not Found error
+func NotFoundError(c *gin.Context, code int, messages ...string) {
+	message := ""
+	if len(messages) > 0 {
+		message = messages[0]
+	}
+
+	if message == "" {
+		message = pkg.GetReasonPhrase(pkg.StatusNotFound)
+	}
+	response := CreateErrorResponse(message, pkg.StatusNotFound, code)
+	Send(c, response.Status, response)
+}

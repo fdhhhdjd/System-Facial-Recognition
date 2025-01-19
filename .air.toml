@@ -1,9 +1,15 @@
-# .air.toml
 [build]
-cmd = "go build -o ./tmp/main ./cmd/server"
+cmd = "go build -o ./tmp/main ./src/cmd/server/main.go"  # path to file main
 bin = "tmp/main"
 include_ext = ["go", "tpl", "tmpl", "html"]
 exclude_dir = ["assets", "tmp", "vendor", "node_modules"]
-include_dir = []
+include_dir = ["src", "internal"]  # add more folder need watching
 exclude_file = []
-delay = 1000 # ms
+delay = 500  # ms, delay time when reload
+
+[log]
+level = "debug"  # Show log detail
+output = "stdout"  # print log  outside console
+
+[watch]
+full_reload = false  # Not need reload all when have change
