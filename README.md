@@ -24,7 +24,7 @@
 ## Technology Stack:
 
 - **Backend**: Go + Gin
-- **Lib**: Have a lot of lib to service project.
+- **Lib**: Have a lot of lib to service projects.
 
 ---
 
@@ -35,13 +35,14 @@
 ```plaintext
 my-go-project/
 ├── cmd/                  # Thư mục chứa các ứng dụng (main packages)
-│   └── myapp/            # Thư mục cho ứng dụng chính
+│   └── server/            # Thư mục cho ứng dụng chính
 │       └── main.go       # File main.go của ứng dụng
 ├── internal/             # Thư mục chứa code nội bộ (không dùng bên ngoài)
 │   ├── handlers/         # Xử lý HTTP handlers (nếu có)
 │   ├── services/         # Business logic (services)
 │   ├── repositories/     # Tương tác với database (repositories)
 │   ├── models/           # Định nghĩa các struct và models
+│   ├── routes/           # Định nghĩa các router của mỗi API.
 │   └── utils/            # Các tiện ích hỗ trợ (helper functions)
 ├── pkg/                  # Thư mục chứa code có thể dùng lại (public packages)
 │   ├── config/           # Cấu hình ứng dụng
@@ -63,13 +64,14 @@ my-go-project/
 ```plaintext
 my-go-project/
 ├── cmd/                  # Folder containing applications (main packages)
-│   └── myapp/            # Folder for the main application
+│   └── server/            # Folder for the main application
 │       └── main.go       # Main application file
 ├── internal/             # Folder for internal code (not for external use)
 │   ├── handlers/         # HTTP handlers (if applicable)
 │   ├── services/         # Business logic (services)
 │   ├── repositories/     # Database interaction (repositories)
 │   ├── models/           # Struct and model definitions
+│   ├── routes/           # Struct path for each API.
 │   └── utils/            # Utility functions (helpers)
 ├── pkg/                  # Folder for reusable code (public packages)
 │   ├── config/           # Application configuration
