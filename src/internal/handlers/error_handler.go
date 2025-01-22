@@ -51,3 +51,16 @@ func NotFoundError(c *gin.Context, code int, messages ...string) {
 	response := CreateErrorResponse(message, pkg.StatusNotFound, code)
 	Send(c, response.Status, response)
 }
+
+func InternalServerError(c *gin.Context, code int, messages ...string) {
+	message := ""
+	if len(messages) > 0 {
+		message = messages[0]
+	}
+
+	if message == "" {
+		message = pkg.GetReasonPhrase(pkg.StatusInternalServerError)
+	}
+	response := CreateErrorResponse(message, pkg.StatusInternalServerError, code)
+	Send(c, response.Status, response)
+}
