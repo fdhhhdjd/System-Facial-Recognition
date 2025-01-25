@@ -3,21 +3,15 @@ package handlers
 import (
 	"time"
 
+	"facial-recognition/src/internal/models"
 	pkg "facial-recognition/src/pkg/constants"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ErrorResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Status  int    `json:"status"`
-	Now     int64  `json:"now"`
-}
-
 // Send sends a response
-func CreateErrorResponse(message string, status int, code int) *ErrorResponse {
-	return &ErrorResponse{
+func CreateErrorResponse(message string, status int, code int) *models.ErrorResponse {
+	return &models.ErrorResponse{
 		Code:    code,
 		Message: message,
 		Status:  status,
