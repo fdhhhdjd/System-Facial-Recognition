@@ -15,6 +15,7 @@ type ErrorResponse struct {
 	Now     int64  `json:"now"`
 }
 
+// Send sends a response
 func CreateErrorResponse(message string, status int, code int) *ErrorResponse {
 	return &ErrorResponse{
 		Code:    code,
@@ -52,6 +53,35 @@ func NotFoundError(c *gin.Context, code int, messages ...string) {
 	Send(c, response.Status, response)
 }
 
+// TooManyRequestsError represents a 429 Too Many Requests error
+func TooManyRequestsError(c *gin.Context, code int, messages ...string) {
+	message := ""
+	if len(messages) > 0 {
+		message = messages[0]
+	}
+
+	if message == "" {
+		message = pkg.GetReasonPhrase(pkg.StatusTooManyRequests)
+	}
+	response := CreateErrorResponse(message, pkg.StatusTooManyRequests, code)
+	Send(c, response.Status, response)
+}
+
+// ForbiddenError represents a 403 Forbidden error
+func ForbiddenError(c *gin.Context, code int, messages ...string) {
+	message := ""
+	if len(messages) > 0 {
+		message = messages[0]
+	}
+
+	if message == "" {
+		message = pkg.GetReasonPhrase(pkg.StatusForbidden)
+	}
+	response := CreateErrorResponse(message, pkg.StatusForbidden, code)
+	Send(c, response.Status, response)
+}
+
+// InternalServerError represents a 500 Internal Server Error
 func InternalServerError(c *gin.Context, code int, messages ...string) {
 	message := ""
 	if len(messages) > 0 {
