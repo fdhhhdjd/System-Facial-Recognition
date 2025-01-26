@@ -1,4 +1,5 @@
-# Makefile
+# Get .env file
+include .env
 
 # Variables
 DOCKER_COMPOSE_FILE = docker-compose.yaml
@@ -8,7 +9,7 @@ GO_MAIN_FILE = ./src/cmd/server/main.go
 # Test
 .PHONY: test
 test:
-	echo "Running tests..."
+	echo "Running tests... $(HOST)"
 
 # Run the server with Docker
 .PHONY: all
