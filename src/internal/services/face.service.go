@@ -1,63 +1,110 @@
 package services
 
 import (
+	"bytes"
 	"facial-recognition/src/internal/models"
+	"image"
+	_ "image/jpeg" // Import JPEG decoder
+	_ "image/png"  // Import PNG decoder
+	"io"
+	"log"
+	"net/http"
+	"os"
 
+	pigo "github.com/esimov/pigo/core"
 	"github.com/gin-gonic/gin"
-	// "gocv.io/x/gocv"
+	"github.com/google/uuid"
 )
 
-func DetectFaces(c *gin.Context) *models.FaceDetectionResult {
-	// Upload image from URL
-	// imageURL := c.Query("image_url")
-	// if imageURL == "" {
-	// 	handlers.BadRequestError(c, pkg.StatusBadRequest)
-	// 	return nil
-	// }
+func DetectFaces(c *gin.Context) *models.FaceRegistrationResponse {
+	var requestBody struct {
+		Image string `json:"image"`
+	}
 
-	// resp, err := http.Get(imageURL)
-	// if err != nil {
-	// 	handlers.BadRequestError(c, pkg.StatusBadRequest, fmt.Sprintf("failed to create temp file: %v", err))
-	// 	return nil
-	// }
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return nil
+	}
 
-	// // Close the response body
-	// defer resp.Body.Close()
+	// Fetch the image from the URL
+	resp, err := http.Get(requestBody.Image)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to fetch image"})
+		return nil
+	}
+	defer resp.Body.Close()
 
-	// // Decode the image
-	// file, err := os.CreateTemp("", "face-detection-*.jpg")
-	// if err != nil {
-	// 	handlers.BadRequestError(c, pkg.StatusBadRequest, fmt.Sprintf("failed to create temp file: %v", err))
-	// 	return nil
-	// }
+	// Read the image from the response body
+	imgData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image data"})
+		return nil
+	}
 
-	// defer os.Remove(file.Name())
+	// Decode to image.Image
+	img, _, err := image.Decode(bytes.NewReader(imgData))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to decode image"})
+		return nil
+	}
 
-	// _, err = io.Copy(file, resp.Body)
-	// if err != nil {
-	// 	handlers.BadRequestError(c, pkg.StatusBadRequest, fmt.Sprintf("failed to save image: %v", err))
-	// 	return nil
-	// }
+	// Load facefinder binary file
+	facefinderData, err := os.ReadFile("cascade/facefinder")
+	if err != nil {
+		log.Printf("Error reading facefinder file: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load facefinder"})
+		return nil
+	}
 
-	// img := gocv.IMRead(file.Name(), gocv.IMReadColor)
-	// defer img.Close()
+	// Initialize Pigo
+	classifier, err := pigo.NewPigo().Unpack(facefinderData)
+	if err != nil {
+		log.Printf("Error unpacking Pigo classifier: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Face detection failed"})
+		return nil
+	}
 
-	// if img.Empty() {
-	// 	handlers.BadRequestError(c, pkg.StatusBadRequest, "failed to read image")
-	// 	return nil
-	// }
+	// Convert image to grayscale
+	grayImg := pigo.RgbToGrayscale(img)
 
-	// // Detect faces
-	// faceCascade := gocv.NewCascadeClassifier()
-	// defer faceCascade.Close()
+	cols, rows := img.Bounds().Dx(), img.Bounds().Dy()
+	cascadeParams := pigo.CascadeParams{
+		MinSize:     50,
+		MaxSize:     500,
+		ShiftFactor: 0.1,
+		ScaleFactor: 1.1,
+		ImageParams: pigo.ImageParams{
+			Pixels: grayImg,
+			Rows:   rows,
+			Cols:   cols,
+			Dim:    cols,
+		},
+	}
 
-	// if !faceCascade.Load("haarcascade_frontalface_default.xml") {
-	// 	handlers.BadRequestError(c, pkg.StatusBadRequest, "failed to load classifier")
-	// 	return nil
-	// }
+	// Detect faces
+	detections := classifier.RunCascade(cascadeParams, 0)
+	detections = classifier.ClusterDetections(detections, 0.2)
 
-	// rects := faceCascade.DetectMultiScale(img)
+	if len(detections) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No face detected"})
+		return nil
+	}
 
-	return &models.FaceDetectionResult{}
+	// Register first detected face
+	bestFace := detections[0]
+	faceID := uuid.New().String()
+	faceData := models.Face{
+		ID:     faceID,
+		X:      bestFace.Col,
+		Y:      bestFace.Row,
+		Width:  bestFace.Scale,
+		Height: bestFace.Scale,
+	}
 
+	response := &models.FaceRegistrationResponse{
+		Message: "Face registered successfully",
+		Face:    faceData,
+	}
+
+	return response
 }

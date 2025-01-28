@@ -18,20 +18,23 @@ func main() {
 		log.Fatalf("could not set trusted proxies: %s\n", err)
 	}
 
-	//* Group v1 routes
-	v1 := r.Group("/v1")
+	// * Group v1 routes
+	api := r.Group("/api")
 	{
-		// Test routes
-		test := v1.Group("/test")
+		// Group v1 routes
+		v1 := api.Group("/v1")
 		{
-			routes.TestRouter(test)
+			// Test routes
+			test := v1.Group("/test")
+			{
+				routes.TestRouter(test)
+			}
+			// Face routes
+			face := v1.Group("/face")
+			{
+				routes.FaceRouter(face)
+			}
 		}
-		// Face routes
-		face := v1.Group("/face")
-		{
-			routes.FaceRouter(face)
-		}
-
 	}
 
 	// Custom 404 handler
