@@ -2,7 +2,9 @@ package services
 
 import (
 	"bytes"
+	"facial-recognition/src/internal/handlers"
 	"facial-recognition/src/internal/models"
+	pkg "facial-recognition/src/pkg/constants"
 	"image"
 	_ "image/jpeg" // Import JPEG decoder
 	_ "image/png"  // Import PNG decoder
@@ -16,20 +18,20 @@ import (
 	"github.com/google/uuid"
 )
 
-func DetectFaces(c *gin.Context) *models.FaceRegistrationResponse {
+func DetectFaces(c *gin.Context) *models.FaceDetectionResponse {
 	var requestBody struct {
 		Image string `json:"image"`
 	}
 
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		handlers.BadRequestError(c, pkg.StatusBadRequest)
 		return nil
 	}
 
 	// Fetch the image from the URL
 	resp, err := http.Get(requestBody.Image)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to fetch image"})
+		handlers.BadRequestError(c, pkg.StatusBadRequest, "Failed to fetch image")
 		return nil
 	}
 	defer resp.Body.Close()
@@ -37,14 +39,14 @@ func DetectFaces(c *gin.Context) *models.FaceRegistrationResponse {
 	// Read the image from the response body
 	imgData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image data"})
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to read image")
 		return nil
 	}
 
 	// Decode to image.Image
 	img, _, err := image.Decode(bytes.NewReader(imgData))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to decode image"})
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to decode image")
 		return nil
 	}
 
@@ -52,7 +54,7 @@ func DetectFaces(c *gin.Context) *models.FaceRegistrationResponse {
 	facefinderData, err := os.ReadFile("cascade/facefinder")
 	if err != nil {
 		log.Printf("Error reading facefinder file: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load facefinder"})
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to read facefinder file")
 		return nil
 	}
 
@@ -60,7 +62,7 @@ func DetectFaces(c *gin.Context) *models.FaceRegistrationResponse {
 	classifier, err := pigo.NewPigo().Unpack(facefinderData)
 	if err != nil {
 		log.Printf("Error unpacking Pigo classifier: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Face detection failed"})
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to unpack Pigo classifier")
 		return nil
 	}
 
@@ -86,25 +88,31 @@ func DetectFaces(c *gin.Context) *models.FaceRegistrationResponse {
 	detections = classifier.ClusterDetections(detections, 0.2)
 
 	if len(detections) == 0 {
-		c.JSON(http.StatusOK, gin.H{"message": "No face detected"})
+		handlers.NotFoundError(c, pkg.StatusNotFound, "No faces detected")
 		return nil
 	}
 
-	// Register first detected face
-	bestFace := detections[0]
-	faceID := uuid.New().String()
-	faceData := models.Face{
-		ID:     faceID,
-		X:      bestFace.Col,
-		Y:      bestFace.Row,
-		Width:  bestFace.Scale,
-		Height: bestFace.Scale,
+	// Register detected faces
+	var faces []models.Face
+	for _, det := range detections {
+		faceID := uuid.New().String()
+		faceData := models.Face{
+			ID:     faceID,
+			X:      det.Col,
+			Y:      det.Row,
+			Width:  det.Scale,
+			Height: det.Scale,
+		}
+		faces = append(faces, faceData)
 	}
 
-	response := &models.FaceRegistrationResponse{
-		Message: "Face registered successfully",
-		Face:    faceData,
+	response := &models.FaceDetectionResponse{
+		Faces: faces,
 	}
 
 	return response
+}
+
+func RegisterFace(c *gin.Context) *models.FaceDetectionResponse {
+	return nil
 }
