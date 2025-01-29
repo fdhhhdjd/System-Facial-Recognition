@@ -11,3 +11,8 @@ type Face struct {
 type FaceDetectionResponse struct {
 	Faces []Face `json:"faces"`
 }
+
+type FaceRegistrationResponse struct {
+	FaceID    string    `json:"face_id"`   // ID của khuôn mặt
+	Embedding []float32 `json:"embedding"` // Embedding của khuôn mặt
+}

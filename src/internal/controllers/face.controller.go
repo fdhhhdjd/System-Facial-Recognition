@@ -13,6 +13,16 @@ func DetectFaces(c *gin.Context) error {
 		return nil
 	}
 
-	handlers.Created(c, "Detect Faces", result)
+	handlers.Ok(c, "Detect Faces", result)
+	return nil
+}
+
+func RegisterFace(c *gin.Context) error {
+	result := services.RegisterFace(c)
+	if result == nil {
+		return nil
+	}
+
+	handlers.Created(c, "Register Face", result)
 	return nil
 }

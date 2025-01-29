@@ -9,5 +9,8 @@ import (
 
 func FaceRouter(router *gin.RouterGroup) {
 	// Face detection
-	router.GET("/detect", handlers.AsyncHandler(controllers.DetectFaces))
+	router.POST("/detect", handlers.AsyncHandler(controllers.DetectFaces))
+
+	// Face registration
+	router.POST("/register", handlers.AsyncHandler(controllers.RegisterFace))
 }

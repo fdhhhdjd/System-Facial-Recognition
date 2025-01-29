@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/Kagami/go-face v0.0.0-20210630145111-0c14797b4d0e // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

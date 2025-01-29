@@ -2,10 +2,12 @@ package services
 
 import (
 	"bytes"
+	"encoding/base64"
 	"facial-recognition/src/internal/handlers"
 	"facial-recognition/src/internal/models"
 	pkg "facial-recognition/src/pkg/constants"
 	"image"
+	"image/jpeg"
 	_ "image/jpeg" // Import JPEG decoder
 	_ "image/png"  // Import PNG decoder
 	"io"
@@ -13,6 +15,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Kagami/go-face"
 	pigo "github.com/esimov/pigo/core"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -113,6 +116,72 @@ func DetectFaces(c *gin.Context) *models.FaceDetectionResponse {
 	return response
 }
 
-func RegisterFace(c *gin.Context) *models.FaceDetectionResponse {
-	return nil
+func RegisterFace(c *gin.Context) *models.FaceRegistrationResponse {
+	var (
+		recognizer *face.Recognizer // Khởi tạo recognizer toàn cục
+	)
+
+	var requestBody struct {
+		Image string `json:"image"` // Base64 encoded image
+	}
+
+	// Parse request body
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		handlers.BadRequestError(c, pkg.StatusBadRequest, "Invalid request body")
+		return nil
+	}
+
+	// Decode base64 image
+	decodedImage, err := base64.StdEncoding.DecodeString(requestBody.Image)
+	if err != nil {
+		handlers.BadRequestError(c, pkg.StatusBadRequest, "Invalid base64 image data")
+		return nil
+	}
+
+	// Decode image to image.Image
+	img, _, err := image.Decode(bytes.NewReader(decodedImage))
+	if err != nil {
+		handlers.BadRequestError(c, pkg.StatusBadRequest, "Failed to decode image")
+		return nil
+	}
+
+	// Save image to a temporary file (GoFace cần đọc từ file)
+	tempFile, err := os.CreateTemp("", "face-*.jpg")
+	if err != nil {
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to create temp file")
+		return nil
+	}
+	defer os.Remove(tempFile.Name()) // Xóa file tạm sau khi xử lý xong
+
+	// Encode image to JPEG and write to temp file
+	if err := jpeg.Encode(tempFile, img, nil); err != nil {
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to encode image to JPEG")
+		return nil
+	}
+
+	// Trích xuất embedding từ ảnh
+	faces, err := recognizer.RecognizeFile(tempFile.Name())
+	if err != nil {
+		handlers.InternalServerError(c, pkg.StatusInternalServerError, "Failed to recognize face")
+		return nil
+	}
+
+	if len(faces) == 0 {
+		handlers.NotFoundError(c, pkg.StatusNotFound, "No face detected in the image")
+		return nil
+	}
+
+	// Lấy embedding của khuôn mặt đầu tiên
+	faceEmbedding := faces[0].Descriptor
+
+	// Tạo ID cho khuôn mặt
+	faceID := uuid.New().String()
+
+	// Trả về response
+	response := &models.FaceRegistrationResponse{
+		FaceID:    faceID,
+		Embedding: faceEmbedding[:], // Convert face.Descriptor to []float32
+	}
+
+	return response
 }
